@@ -1,0 +1,105 @@
+
+
+### 1. Build BuddyStack
+
+Open a new terminal
+
+bdf@ubuntu:~$ cd ~/src/ParallelShadowStacks/BuddyStack/
+bdf@ubuntu:~/src/ParallelShadowStacks/BuddyStack$ make clean
+bdf@ubuntu:~/src/ParallelShadowStacks/BuddyStack$ make
+
+
+
+###  2. Use BuddyStack to build/run Firefox-79
+
+(1) Run firefox
+Firefox-79 has been prebuilt in the virtual machine.
+Open a new terminal and you can run firefox as follows.
+
+bdf@ubuntu:~$ cd src/firefox-79.0/
+bdf@ubuntu:~/src/firefox-79.0$ . ~/src/BuddyStack.sh 
+bdf@ubuntu:~/src/firefox-79.0$ ./install.buddystack/bin/firefox
+
+(2) Build firefox if needed
+
+Currently, the version of rustc used in BuddyStack is 1.43.
+If you install rustc 1.43 in a different directory, you need to change 
+the following environment variable in ~/src/BuddyStack.sh accordingly.
+
+export AFL_RUSTC=/home/bdf/.rustup/toolchains/1.43-x86_64-unknown-linux-gnu/bin/rustc
+
+
+(a) Configure the mozconfig file under ~/src/firefox-79.0 as follows:
+
+mk_add_options MOZ_OBJDIR=$topsrcdir/obj.buddystack
+mk_add_options MOZ_MAKE_FLAGS="-j4"
+ac_add_options --enable-application=browser
+ac_add_options CC="spa-clang"
+ac_add_options CXX="spa-clang++"
+ac_add_options --prefix=$topsrcdir/install.buddystack
+ac_add_options --disable-debug-symbols
+
+(b) Open a new terminal and build firefox
+
+cd ~/src/firefox-79.0
+. ~/src/BuddyStack.sh
+./mach build 2>&1 | tee build.firefox.log.txt
+
+
+
+### 3. Use BuddyStack to build CPU2006
+
+Suppose the directory of CPU2006 is ~/src/cpu2006.
+
+(1) Set the environment variables in ~/src/cpu2006/config/cpu2006.cfg
+CC           = spa-clang -std=gnu89 -D_GNU_SOURCE
+CXX          = spa-clang++ -std=c++03  -D_GNU_SOURCE 
+COPTIMIZE     = -O3
+CXXOPTIMIZE  = -O3
+
+(2) Open a new terminal, run the following commands one by one.
+
+cd ~/src/cpu2006/
+. ~/src/BuddyStack.sh
+. ./shrc
+rm -rf benchspec/CPU2006/*/exe/
+runspec  --action=clean --config=cpu2006 all
+runspec  --action=build --config=cpu2006 401 403 445 464 456 470 462 429 433 400 458 482 473 447 444 471 453 450 483
+
+
+### 4. Build and run our Pin tool to get the stack information
+
+(1) Open a new terminal and build our Pin tool as follows.
+
+bdf@ubuntu:~$ . ~/src/pin.sh
+bdf@ubuntu:~$ cd ~/src/ParallelShadowStacks/MyPinTool/
+bdf@ubuntu:~/src/ParallelShadowStacks/MyPinTool$ make clean
+bdf@ubuntu:~/src/ParallelShadowStacks/MyPinTool$ make
+
+(2) Run our Pin tool 
+
+(a) If you want to know the stack information of one execution of the ls command, 
+open a new terminal and run it as follows.
+
+bdf@ubuntu:~$ ~/src/pin-3.13/pin -follow-execv -mt -t ~/src/ParallelShadowStacks/MyPinTool/obj-intel64/MyPinTool.so -- ls
+
+Desktop  SPA.call.stack.7548.7548.0.txt  src  tar
+
+The file generated (named as SPA.call.stack.7548.7548.0.txt) contains 
+the stack information of running 'ls'.
+
+bdf@ubuntu:~$ cat SPA.call.stack.7548.7548.0.txt 
+7548 7548 0 10928 13 ls
+
+The call stack size is 10928 bytes and the call stack depth is 13.
+
+(b) Patience is necessary when running firefox with Pin.
+
+bdf@ubuntu:~$ ~/src/pin-3.13/pin -follow-execv -mt -t ~/src/ParallelShadowStacks/MyPinTool/obj-intel64/MyPinTool.so -- ls /usr/lib/firefox/firefox
+
+
+
+
+
+
+
