@@ -55,7 +55,7 @@ iron@CSE:BuddyStack$ . ./env.sh
 iron@CSE:BuddyStack$ ./build.sh
 ```
 
-#### (3) How to Use BuddyStack to build an Existing Project
+#### (3) How to Use BuddyStack to Build an Existing Project
 
 #####  Open a New Terminal
 
@@ -98,7 +98,29 @@ Disassembly of section .text:
   25:	48 bf 00 00 00 00 00 	movabs $0x0,%rdi
   2c:	00 00 00 
 
-....
+...
 
 ```
 
+
+#### (4) How to Use Our Pin Tool to Get the Stack Information of a Running Program
+
+#####  Open a New Terminal
+
+```sh
+iron@CSE:~$ cd github/BuddyStack/
+
+iron@CSE:BuddyStack$ . ./env.sh 
+
+iron@CSE:BuddyStack$ pin -follow-execv -mt -t ./src/ParallelShadowStacks/MyPinTool/obj-intel64/MyPinTool.so -- ls
+
+SPA.call.stack.20019.20019.0.txt   demo	       pin.log
+TACO_MajorRevision.pdf		    env.sh	       remove.sh
+...
+
+iron@CSE:BuddyStack$ cat SPA.call.stack.*.txt 
+
+20019 20019 0 11264 13 ls
+
+The call stack size is 11264 bytes and the call stack depth is 13.
+```
