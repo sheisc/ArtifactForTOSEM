@@ -11,5 +11,3 @@ all:
 clean:
 	rm -rf main test_simd *.o *.bc *.s *.so test_pic_tls test_mprotect test_tls
 
-
-
